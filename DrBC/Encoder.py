@@ -96,10 +96,10 @@ print(GRUCell(hLastLayer,hN,W,U))
 """
 
 
-def aggregateNeighborhood(G, hLastLayer, v, neighbors, neighborsIndex):
+def aggregateNeighborhood(G, hLastLayer, v, neighbors):
     sum = 0
-    for j,i in zip(neighbors,neighborsIndex):
-        sum += hLastLayer[i] / (math.sqrt(G.getDegree(v) + 1) * math.sqrt(G.getDegree(j) + 1))
+    for i in neighbors:
+        sum += hLastLayer[i] / (math.sqrt(G.getDegree(v) + 1) * math.sqrt(G.getDegree(i) + 1))
 
     return sum
 
