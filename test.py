@@ -1,11 +1,12 @@
-import filetograph as ftg
+from csr import CSR
 import os
 
 cwd = os.getcwd()
+graph = CSR(f"{cwd}\\graphs\\3.txt")
 
-for i in range(1, 3):
-    print(f"Graph {i}")
-    graph_csr = ftg.csr(f"{cwd}\\graphs\\{i}.txt")
+print(graph.v)
+print(graph.offset)
 
-    print(graph_csr[0])
-    print(graph_csr[1])
+for i in range(len(graph.offset) - 1):
+    print(graph.get_degree(i))
+    print(graph.get_neighbors(i))
