@@ -2,11 +2,12 @@ class CSR:
 
     def __init__(self, file):
         with open(file, "r") as f:
-            self.vertices = int(f.readline())
-            self.edges = int(f.readline())
+            self.n_vertices = int(f.readline())
+            self.n_edges = int(f.readline())
 
             self.v = []
             self.offset = [0]
+            self.vertices = [*range(self.n_vertices)]
 
             for line in f.readlines():
                 if line.strip():
