@@ -14,7 +14,7 @@ class EncoderDecoder:
         self.v = v
         self.X = X
 
-        self.encoder = Encoder.Encoder(self.L, G.vertices, INPUT_DIMENSION)
+        self.encoder = Encoder.Encoder(self.L, G.n_vertices, INPUT_DIMENSION)
 
         self.W0 = np.random.rand(INPUT_DIMENSION, EMBEDDING_DIMENSION)
         self.W1 = np.random.rand(EMBEDDING_DIMENSION, EMBEDDING_DIMENSION)
