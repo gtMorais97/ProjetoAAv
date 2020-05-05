@@ -2,107 +2,135 @@ import numpy as np
 from numpy import linalg as la
 import math
 
-"""Encodes graph G where G's nodes have features represented in X. 
-   L is the encoder's number of layers. 
-   W and U are lists of weight matrices (W contains W0...W3, U contains U1...U3). """
-def encode(G, X, L, W, U):
-    V = G[0]
-    nNodes = len(X)
-    nFeatures = len(X[0])
-
-    """h - embeddings dos nodes em cada camada (0...L)"""
-    h = np.zeros((L + 1, nNodes, len(X[0])))
-    """hN - embeddings do neighborhood dos nodes nas camadas 2..L"""
-    hN = np.zeros((L - 1, nNodes, len(X[0])))
-
-    h[0] = X
-
-    h[1] = ReLU(np.matmul(W[0], h[0]))
-    h[1] = h[1] / la.norm(h[1], 2)
-
-    for l in range(2, L):
-        for i, v in enumerate(V):
-            """AGGREGATE"""
-            hN[l, i] = aggregateNeighborhood(G, h[l - 1], v, G.getNeighbors(v), G.getNeighborsIndex(v))
-            """COMBINE"""
-            h[l, i] = GRUCell(h[l - 1, i], hN[l, i], W, U)
-
-        h[l] = h[l] / la.norm(h[l], 2)
-
-    """z sera o embedding final, obtido atraves da funcao maxpool"""
-    z = maxPool(h, nNodes, nFeatures)
 
 
-"""Para cada elemento do z, escolhe o valor maximo dos embeddings de 1...L"""
-def maxPool(h, nNodes, nFeatures):
-    z = np.zeros((nNodes, nFeatures))
 
-    lenH = len(h)
-    for i, emb in enumerate(z):
 
-        for j0 in range(nFeatures):
-            candidates = np.zeros(lenH - 1)
-            for j1 in range(1, lenH):
-                candidates[j1 - 1] = h[j1, i, j0]
+class Encoder:
 
-            emb[j0] = max(candidates)
+    def __init__(self, L, nNodes, nFeatures):
+        self.nFeatures = nFeatures
+        self.nNodes = nNodes
+        self.H = np.zeros((L + 1, nNodes, nFeatures))  # stores the values for all nodes
 
-    return z
+    """Encodes G's node reprensented by X. 
+       L is the encoder's number of layers. 
+       W0..3 and U0..2 are 3x3 weight matrices. """
 
-"""
-MAX POOL TEST
+    def encode(self, G, v, X, L, W0, W1, W2, W3, U1, U2, U3):
 
-X = np.array([[4, 1, 2, 1], [4, 4, 5, 1], [4, 6, 2, 1]])
+        """h - embeddings dos nodes em cada camada (0...L)"""
+        h = np.zeros((L + 1, self.nFeatures))
+        """hN - embeddings do neighborhood dos nodes nas camadas 2..L (tem a mesma dimensão por uma questão de simplicidade,
+         os 2 primeiros elementos vão ficar a 0) """
+        hN = np.zeros((L + 1, self.nFeatures))
 
-*Na primeira iterecao, o maxPool escolhe entre (4,1,6), que corresponde a (h[1,0,0],h[2,0,0],h[3,0,0]), 
-depois entre (5,1,2), (3,3,6) e por aí em diante*
+        h[0] = np.transpose(X)
+        self.H[0, v] = h[0]
 
-h = np.array([[[4, 1, 3, 1], [3, 3, 4, 1], [1, 5, 2, 1]],
-              [[4, 5, 3, 1], [3, 4, 4, 1], [9, 5, 6, 1]],
-              [[1, 1, 3, 1], [3, 6, 4, 1], [1, 2, 7, 1]],
-              [[6, 2, 6, 2], [1, 5, 2, 1], [9, 3, 5, 8]]])
-print(maxPool(h, len(X), len(X[0])))
-"""
+        for node in range(self.nNodes):
+            self.H[1, node] = np.transpose(ReLU(np.matmul(W0, np.transpose(self.H[0, node]))))
+            if self.H[1, node].any():  # se nao for um vetor de zeros
+                self.H[1, node] = self.H[1, node] / la.norm(self.H[1, node], 2)
+
+        h[1] = self.H[1, v]
+
+        for l in range(2, L + 1):
+            for node in range(self.nNodes):
+                """AGGREGATE"""
+                hN[l] = self.aggregateNeighborhood(G, node, G.get_neighbors(node), l)
+                """COMBINE"""
+                self.H[l, node] = self.GRUCell(self.H[l - 1, node], hN[l], W1, W2, W3, U1, U2, U3)
+
+            self.H[l, v] = self.H[l, v] / la.norm(self.H[l, v], 2)
+            h[l] = self.H[l, v]
+
+        """z sera o embedding final, obtido atraves da funcao maxpool"""
+        z = maxPool(h[1:], self.nFeatures)
+        return z
+
+    """Store the values of h so they can be used as neighbor values later
+    def storeH(self, h, v):
+        for i, hl in enumerate(h, start=1):
+            self.H[i, v] = hl
+    """
+
+    """Para cada elemento do z, escolhe o valor maximo dos embeddings de 1...L"""
+
+    """
+    MAX POOL TEST
+    
+    X = np.array([[4, 1, 2, 1], [4, 4, 5, 1], [4, 6, 2, 1]])
+    
+    *Na primeira iterecao, o maxPool escolhe entre (4,1,6), que corresponde a (h[1,0,0],h[2,0,0],h[3,0,0]), 
+    depois entre (5,1,2), (3,3,6) e por aí em diante*
+    
+    h = np.array([[[4, 1, 3, 1], [3, 3, 4, 1], [1, 5, 2, 1]],
+                  [[4, 5, 3, 1], [3, 4, 4, 1], [9, 5, 6, 1]],
+                  [[1, 1, 3, 1], [3, 6, 4, 1], [1, 2, 7, 1]],
+                  [[6, 2, 6, 2], [1, 5, 2, 1], [9, 3, 5, 8]]])
+    print(maxPool(h, len(X), len(X[0])))
+    """
+
+    def GRUCell(self, hLastLayer, hN, W1, W2, W3, U1, U2, U3):
+        h = np.zeros(self.nFeatures)
+
+        """Vectorized Sigmoid and tanh functions"""
+        sigmoid_v = np.vectorize(sigmoid)
+        tanh_v = np.vectorize(np.tanh)
+
+        hNt = np.transpose(hN)
+        hLastLayert = np.transpose(hLastLayer)
+
+        u = sigmoid_v(np.matmul(W1, hNt) + np.matmul(U1, hLastLayert))
+        r = sigmoid_v(np.matmul(W2, hNt) + np.matmul(U2, hLastLayert))
+        f = tanh_v(np.matmul(W3, hNt) + np.matmul(U3, hLastLayert))
+
+        h = np.multiply(u, f) + np.multiply(1 - u, hLastLayert)
+
+        return np.transpose(h)
+
+    """
+    GRU test
+    
+    hN = np.array([[4, 1, 3], [3, 3, 4], [1, 5, 2]])
+    
+    hLastLayer = np.array([[2, 9, 6], [2, 6, 4], [6, 1, 2]])
+    
+    W = np.array([0,4,5,2])
+    U = np.array([5,2,3])
+    
+    print(GRUCell(hLastLayer,hN,W,U))
+    """
+
+    def aggregateNeighborhood(self, G, v, neighbors, l):
+        hN = np.zeros(self.nFeatures)
+        for n in neighbors:
+            """
+            if not self.H[currentLayer - 1, n].any():  # se o neighbor ainda nao foi encoded, temos de o fazer
+                Xn = np.array([[G.get_degree(n)], [1], [1]])  # neighbor's feature vector X
+                self.encode(G, n, Xn, L, W0, W1, W2, W3, U1, U2, U3)
+            """
+            hN += self.H[l - 1, n] / (math.sqrt(G.get_degree(v) + 1) * math.sqrt(G.get_degree(n) + 1))
+
+        return hN
+
 
 def sigmoid(x):
     return 1 / (1 + math.exp(-x))
 
-def GRUCell(hLastLayer, hN, W, U):
-    h = np.zeros((len(hLastLayer),len(hLastLayer[0])))
-
-    """Vectorized Sigmoid and tanh functions"""
-    sigmoid_v = np.vectorize(sigmoid)
-    tanh_v = np.vectorize(np.tanh)
-    for i,emb in enumerate(h):
-        u = sigmoid_v(W[1]*hN[i] + U[0]*hLastLayer[i])
-        r = sigmoid_v(W[2]*hN[i] + U[1]*hLastLayer[i])
-        f = tanh_v(W[3]*hN[i] + U[2]*hLastLayer[i])
-
-        h[i] = np.multiply(u,f) + np.multiply(1-u, hLastLayer[i])
-
-
-    return h
-
-"""GRU test
-
-hN = np.array([[4, 1, 3], [3, 3, 4], [1, 5, 2]])
-
-hLastLayer = np.array([[2, 9, 6], [2, 6, 4], [6, 1, 2]])
-
-W = np.array([0,4,5,2])
-U = np.array([5,2,3])
-
-print(GRUCell(hLastLayer,hN,W,U))
-"""
-
-
-def aggregateNeighborhood(G, hLastLayer, v, neighbors):
-    sum = 0
-    for i in neighbors:
-        sum += hLastLayer[i] / (math.sqrt(G.getDegree(v) + 1) * math.sqrt(G.getDegree(i) + 1))
-
-    return sum
-
 
 def ReLU(x):
     return np.maximum(x, 0)
+
+
+def maxPool(h, nFeatures):
+    z = np.zeros(nFeatures)
+
+    ht = np.transpose(h)
+
+    for i, candidates in enumerate(ht):
+        print("candidates for z", i, ": ", candidates)
+        z[i] = max(candidates)
+
+    return z
