@@ -1,4 +1,5 @@
 import networkx as nx
+import random_graph
 
 
 def csr_to_networkx(csr):
@@ -9,5 +10,5 @@ def csr_to_networkx(csr):
     return graph
 
 
-def betweenness_centrality(csr):
-    return nx.betweenness_centrality(csr_to_networkx(csr))
+def betweenness_centrality(csr, normalized=True):
+    return nx.betweenness_centrality(csr_to_networkx(csr), normalized=normalized)
