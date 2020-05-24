@@ -11,14 +11,31 @@ class CSR:
 
             for line in f.readlines():
                 if line.strip():
-                    neighbours = line.split(" ")
+                    neighbors = line.split(" ")
 
-                    for neighbour in neighbours:
-                        self.v.append(int(neighbour))
+                    for neighbor in neighbors:
+                        self.v.append(int(neighbor))
 
-                    self.offset.append(self.offset[-1] + len(neighbours))
+                    self.offset.append(self.offset[-1] + len(neighbors))
                 else:
                     self.offset.append(self.offset[-1])
+
+    def __init__(self, n_vertices, n_edges, edges):
+        self.n_vertices = n_vertices
+        self.n_edges = n_edges
+
+        self.v = []
+        self.offset = [0]
+        self.vertices = [*range(self.n_vertices)]
+
+        for neighbors in edges.values():
+            if neighbors:
+                for neighbor in neighbors:
+                    self.v.append(int(neighbor))
+
+                self.offset.append(self.offset[-1] + len(neighbors))
+            else:
+                self.offset.append(self.offset[-1])
 
     def get_degree(self, node):
         return self.offset[node + 1] - self.offset[node]
