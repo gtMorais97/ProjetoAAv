@@ -2,7 +2,7 @@ import random
 from csr import CSR
 
 
-def erdos_renyi(n=5, p=0.2):
+def erdos_renyi_graph(n=5, p=0.2):
     n_edges = 0
     edges = {i: [] for i in range(n)}
 
