@@ -13,4 +13,4 @@ def erdos_renyi_graph(n=5, p=0.2):
                 edges[j].append(i)
                 n_edges += 1
 
-    return CSR(n, n_edges, edges)
+    return CSR(n_vertices=n, n_edges=n_edges, edges=edges)
