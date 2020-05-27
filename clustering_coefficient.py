@@ -2,6 +2,7 @@ import os
 import csr
 import random
 import random_graph
+import utils
 
 
 def binary_search(r, acc_wedge_count):
@@ -51,7 +52,7 @@ def uniform_wedge(csr, sample_size):
         w = generate_random_wedge(csr, index)
         sum += c(csr, w)
 
-    return total_wedges * sum / (3 * sample_size)
+    return (total_wedges * sum) / (3 * sample_size)
 
 
 def uniform_edge():
@@ -64,8 +65,13 @@ def uniform_vertex():
 
 if __name__ == "__main__":
     cwd = os.getcwd()
-    # graph = csr.CSR(file=f"{cwd}\\graphs\\4.txt")
-    graph = random_graph.erdos_renyi_graph(20, .6)
-    print(graph.v)
-    print(graph.offset)
-    print(uniform_wedge(graph, 15))
+    # array = utils.tsv_to_array(f"{cwd}\\tsv_graphs\\test")
+    # print(array)
+    graph = csr.CSR(tsv_file=f"{cwd}\\tsv_graphs\\out.com-amazon")
+    # graph = random_graph.erdos_renyi_graph(20, .6)
+    # print(graph.n_vertices)
+    # print(graph.n_edges)
+    # print(graph.vertices)
+    # print(graph.v)
+    # print(graph.offset)
+    print(uniform_wedge(graph, 300))
