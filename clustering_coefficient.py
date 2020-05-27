@@ -1,38 +1,4 @@
-import os
-import csr
 import random
-import random_graph
-import utils
-
-
-def binary_search(r, acc_wedge_count):
-    left = 0
-    right = len(acc_wedge_count) - 1
-    while left <= right:
-        mid = int(left + ((right - left) / 2))
-        if acc_wedge_count[mid] == r:
-            return mid
-        elif r < acc_wedge_count[mid]:
-            right = mid - 1
-        else:
-            left = mid + 1
-    return None
-
-
-def search(r, acc_wedge_count):
-    for i in range(len(acc_wedge_count)):
-        if r <= acc_wedge_count[i]:
-            return i
-
-
-def generate_random_wedge(csr, index):
-    neighbors = csr.get_neighbors(index)
-    random.shuffle(neighbors)
-    return [neighbors.pop(), index, neighbors.pop()]
-
-
-def c(csr, w):
-    return 1 if w[0] in csr.get_neighbors(w[2]) else 0
 
 
 def uniform_wedge(csr, sample_size):
@@ -99,34 +65,31 @@ def uniform_vertex(csr, sample_size):
     return ((csr.n_vertices - s_estimate) * sum) / (3 * sample_size)
 
 
-if __name__ == "__main__":
-    cwd = os.getcwd()
-    # array = utils.tsv_to_array(f"{cwd}\\tsv_graphs\\test")
-    # print(array)
-    graph = csr.CSR(tsv_file=f"{cwd}\\tsv_graphs\\out.com-amazon")
-    # graph = random_graph.erdos_renyi_graph(20, .6)
-    # print(graph.n_vertices)
-    # print(graph.n_edges)
-    # print(graph.vertices)
-    # print(graph.v)
-    # print(graph.offset)
-    uw_mean = 0
-    ue_mean = 0
-    uv_mean = 0
-    iterations = 5
-    for i in range(iterations):
-        uw = uniform_wedge(graph, 300)
-        ue = uniform_edge(graph, 300)
-        uv = uniform_vertex(graph, 300)
+def binary_search(r, acc_wedge_count):
+    left = 0
+    right = len(acc_wedge_count) - 1
+    while left <= right:
+        mid = int(left + ((right - left) / 2))
+        if acc_wedge_count[mid] == r:
+            return mid
+        elif r < acc_wedge_count[mid]:
+            right = mid - 1
+        else:
+            left = mid + 1
+    return None
 
-        uw_mean += uw
-        ue_mean += ue
-        uv_mean += uv
 
-        print(f"Iteration:\t{i}")
-        print(f"Uniform wedge:\t{uw}")
-        print(f"Uniform edge:\t{ue}")
-        print(f"Uniform vertex:\t{uv}")
-    print(f"Uniform wedge mean:\t{uw_mean / iterations}")
-    print(f"Uniform edge mean:\t{ue_mean / iterations}")
-    print(f"Uniform vertex mean:\t{uv_mean / iterations}")
+def search(r, acc_wedge_count):
+    for i in range(len(acc_wedge_count)):
+        if r <= acc_wedge_count[i]:
+            return i
+
+
+def generate_random_wedge(csr, index):
+    neighbors = csr.get_neighbors(index)
+    random.shuffle(neighbors)
+    return [neighbors.pop(), index, neighbors.pop()]
+
+
+def c(csr, w):
+    return 1 if w[0] in csr.get_neighbors(w[2]) else 0
