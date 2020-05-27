@@ -1,12 +1,15 @@
 from DrBC import Encoder
 import csr
 import random_graph as rg
+import betweenness_centrality as bc
 import numpy as np
 import os
 import math
 import time
 import random
 from random import randrange
+from collections import Counter
+import operator
 
 
 class EncoderDecoder:
@@ -17,20 +20,23 @@ class EncoderDecoder:
         self.HIDDEN_NEURONS = 5  # number of decoder hidden neurons
         self.OUTPUT_DIMENSION = 1
         self.TOTAL_LAYERS = 6
-        self.learning_rate = 0.01
+
+        self.learning_rate = 0.0001
         self.beta1 = 0.9
         self.beta2 = 0.999
-        self.eps = 10 ** (-8)
+        self.eps = 10**-8
 
         self.SAMPLE_SIZE = 5
 
-        self.MIN_VERTICES = 15
-        self.MAX_VERTICES = 50
-        self.MIN_CONNECTION_PROB = 0.1
+        self.MIN_VERTICES = 50
+        self.MAX_VERTICES = 60
+        self.MIN_CONNECTION_PROB = 0.5
         self.MAX_CONNECTION_PROB = 0.9
 
+        self.TOP_N =10
+
         """Encoder weights"""
-        W0 = np.random.rand(self.INPUT_DIMENSION, self.EMBEDDING_DIMENSION)
+        W0 = np.random.rand(self.EMBEDDING_DIMENSION, self.INPUT_DIMENSION)
         W1 = np.random.rand(self.EMBEDDING_DIMENSION, self.EMBEDDING_DIMENSION)
         W2 = np.random.rand(self.EMBEDDING_DIMENSION, self.EMBEDDING_DIMENSION)
         W3 = np.random.rand(self.EMBEDDING_DIMENSION, self.EMBEDDING_DIMENSION)
@@ -40,11 +46,25 @@ class EncoderDecoder:
         U3 = np.random.rand(self.EMBEDDING_DIMENSION, self.EMBEDDING_DIMENSION)
 
         """Decoder weights"""
-        W4 = np.random.rand(self.HIDDEN_NEURONS, self.INPUT_DIMENSION)
+        W4 = np.random.rand(self.HIDDEN_NEURONS, self.EMBEDDING_DIMENSION)
         W5 = np.random.rand(self.OUTPUT_DIMENSION, self.HIDDEN_NEURONS)
 
         B4 = np.transpose(np.ones(self.HIDDEN_NEURONS))
         B5 = np.ones(self.OUTPUT_DIMENSION)
+        """
+        W0 = np.ones((self.EMBEDDING_DIMENSION, self.INPUT_DIMENSION))
+        W1 = np.ones((self.EMBEDDING_DIMENSION, self.EMBEDDING_DIMENSION))
+        W2 = np.ones((self.EMBEDDING_DIMENSION, self.EMBEDDING_DIMENSION))
+        W3 = np.ones((self.EMBEDDING_DIMENSION, self.EMBEDDING_DIMENSION))
+        U1 = np.ones((self.EMBEDDING_DIMENSION, self.EMBEDDING_DIMENSION))
+        U2 = np.ones((self.EMBEDDING_DIMENSION, self.EMBEDDING_DIMENSION))
+        U3 = np.ones((self.EMBEDDING_DIMENSION, self.EMBEDDING_DIMENSION))
+        W4 = np.ones((self.HIDDEN_NEURONS, self.EMBEDDING_DIMENSION))
+        W5 = np.ones((self.OUTPUT_DIMENSION, self.HIDDEN_NEURONS))
+
+        B4 = np.transpose(np.ones(self.HIDDEN_NEURONS))
+        B5 = np.ones(self.OUTPUT_DIMENSION)
+        """
 
         self.W = [None] * self.TOTAL_LAYERS
         self.W[0] = W0
@@ -74,8 +94,8 @@ class EncoderDecoder:
         self.mB = [None] * self.TOTAL_LAYERS
         self.vB = [None] * self.TOTAL_LAYERS
 
-        self.mW[0] = np.zeros((self.INPUT_DIMENSION, self.EMBEDDING_DIMENSION))
-        self.vW[0] = np.zeros((self.INPUT_DIMENSION, self.EMBEDDING_DIMENSION))
+        self.mW[0] = np.zeros((self.EMBEDDING_DIMENSION, self.INPUT_DIMENSION))
+        self.vW[0] = np.zeros((self.EMBEDDING_DIMENSION, self.INPUT_DIMENSION))
 
         for i in range(1, 4):
             self.mW[i] = np.zeros((self.EMBEDDING_DIMENSION, self.EMBEDDING_DIMENSION))
@@ -84,8 +104,8 @@ class EncoderDecoder:
             self.mU[i] = np.zeros((self.EMBEDDING_DIMENSION, self.EMBEDDING_DIMENSION))
             self.vU[i] = np.zeros((self.EMBEDDING_DIMENSION, self.EMBEDDING_DIMENSION))
 
-        self.mW[4] = np.zeros((self.HIDDEN_NEURONS, self.INPUT_DIMENSION))
-        self.vW[4] = np.zeros((self.HIDDEN_NEURONS, self.INPUT_DIMENSION))
+        self.mW[4] = np.zeros((self.HIDDEN_NEURONS, self.EMBEDDING_DIMENSION))
+        self.vW[4] = np.zeros((self.HIDDEN_NEURONS, self.EMBEDDING_DIMENSION))
 
         self.mB[4] = np.transpose(np.zeros(self.HIDDEN_NEURONS))
         self.vB[4] = np.transpose(np.zeros(self.HIDDEN_NEURONS))
@@ -96,42 +116,71 @@ class EncoderDecoder:
         self.mB[5] = np.zeros(self.OUTPUT_DIMENSION)
         self.vB[5] = np.zeros(self.OUTPUT_DIMENSION)
 
-        for i in range(10):
+        for i in range(1,1000):
             print('epoch:', i)
+            """Generate Random Graph"""
+            
             n_nodes = randrange(self.MIN_VERTICES, self.MAX_VERTICES)
-            n_nodes = 4
             connection_prob = random.uniform(self.MIN_CONNECTION_PROB, self.MAX_CONNECTION_PROB)
             G = rg.erdos_renyi_graph(n_nodes, connection_prob)
-            encoder = Encoder.Encoder(self.L, G.n_vertices, self.INPUT_DIMENSION)
+            """
+            cur_path = os.path.dirname(__file__)
 
+            file_path = os.path.relpath('../graphs/1.txt', cur_path)
+            print(file_path)
+            G = csr.CSR('graphs/1.txt')
+            n_nodes = G.n_vertices
+            """
+            """Init encoder"""
+            encoder = Encoder.Encoder(self.L, G.n_vertices, self.EMBEDDING_DIMENSION)
+
+            """Get exact BC values"""
             bcScoresTarget = np.zeros(n_nodes)
-            # TODO Calculate BC for all nodes
+            bcScoresDict = bc.betweenness_centrality(G)
+            for key in bcScoresDict:
+                bcScoresTarget[key] = bcScoresDict[key]
 
+            topTarget = dict(sorted(bcScoresDict.items(), key=operator.itemgetter(1), reverse=True)[:self.TOP_N]) #top N high BC nodes
+
+            """Get Predicted BC values"""
             bcScoresPredicted = np.zeros(n_nodes)
+            bcScoresPredictedDict = {}
             for node in range(n_nodes):
                 self.feedForward(encoder, G, node)
-
                 bcScoresPredicted[node] = self.x[5]
+                bcScoresPredictedDict[node] = self.x[5]
 
+            topPredicted = dict(sorted(bcScoresPredictedDict.items(), key=operator.itemgetter(1), reverse=True)[:self.TOP_N])
+
+            common_nodes = sum(n in topPredicted.keys() for n in topTarget.keys())
+            print('common nodes:', common_nodes)
+
+            """Sample node pairs"""
             nodePairs, sourceNodes = self.sampleNodes(n_nodes)
 
+            """Calculate target and predicted differences for each pair"""
             targetDifferences = self.getTargetDifferences(nodePairs, bcScoresTarget)
-            targetDifferences = np.ones(5)  # TODO delete later, cheat para poder testar
             predictedDifferences = self.getPredictedDifferences(nodePairs, bcScoresPredicted)
+            #print('target:', targetDifferences)
+            #print('pred:', predictedDifferences)
+            loss = self.lossFunction(targetDifferences, predictedDifferences)
+            print("Loss:", loss)
 
-            error = self.lossFunction(targetDifferences, predictedDifferences)
-            print("Error:", error)
             WGradientsSum = [None] * self.TOTAL_LAYERS
             UGradientsSum = [None] * self.TOTAL_LAYERS
             BGradientsSum = [None] * self.TOTAL_LAYERS
 
+            """Calculate Adam 'Gradients' """
             for t, p, sourceNode in zip(targetDifferences, predictedDifferences, sourceNodes):
-                WGradients, UGradients, BGradients = self.backPropagate(t, p, sourceNode, encoder)
+                #print('node pair:', nodePair)
+                #print('target:', t)
+                #print('prediction:', p)
+                WGradients, UGradients, BGradients = self.backPropagate(t, p, sourceNode, encoder, i)
 
                 if UGradients is None:
-                    return WGradients  # in this case, WGradients is an error message
+                     print(WGradients) # in this case, WGradients is an error message
 
-                if WGradientsSum[0] is None:
+                elif WGradientsSum[0] is None:
                     WGradientsSum = WGradients
                     UGradientsSum = UGradients
                     BGradientsSum = BGradients
@@ -140,12 +189,12 @@ class EncoderDecoder:
                     UGradientsSum = UGradientsSum + UGradients
                     BGradientsSum = BGradientsSum + BGradients
 
-            for i in range(self.TOTAL_LAYERS):
-                self.W[i] -= self.learning_rate * WGradientsSum[i]
-                if 1 <= i <= 3:
-                    self.U[i] -= self.learning_rate * UGradientsSum[i]
-                if i >= 4:
-                    self.B[i] = self.B[i] - self.learning_rate * BGradientsSum[i][0]
+            for j in range(self.TOTAL_LAYERS):
+                self.W[j] = self.W[j] - (self.learning_rate * WGradientsSum[j])
+                if 1 <= j <= 3:
+                    self.U[j] = self.U[j] - (self.learning_rate * UGradientsSum[j])
+                if j >= 4:
+                    self.B[j] = self.B[j] - (self.learning_rate * BGradientsSum[j][0])
 
     def feedForward(self, encoder, G, node):
         X = np.array([[G.get_degree(node)], [1], [1]])
@@ -159,14 +208,15 @@ class EncoderDecoder:
         """MLP Decoder"""
         self.z[4] = self.B[4] + np.matmul(self.W[4], np.transpose(self.x[3][0]))
         self.x[4] = ReLU(self.z[4])
-     
-        self.x[5] = (self.B[5] + np.matmul(self.W[5], self.x[4]))[0]
 
-    def backPropagate(self, t, p, sourceNode, encoder):
+        self.x[5] = (self.B[5] + np.matmul(self.W[5], self.x[4]))[0]
+        #print('x5:',self.x[5])
+
+    def backPropagate(self, t, p, source_node, encoder, i):
         error_message = "ERROR, INDETERMINATE DERIVATIVE"
 
         """derivatives and deltas calculation"""
-        deltas = [None] * self.TOTAL_LAYERS
+        delta = [None] * self.TOTAL_LAYERS
 
         """Gradients"""
         WGradients = [None] * self.TOTAL_LAYERS
@@ -183,7 +233,8 @@ class EncoderDecoder:
 
         """Decoder Gradients"""
         currentLayer = self.TOTAL_LAYERS - 1  # layer 5
-        deltas[currentLayer] = self.dEdx(t, p)
+        delta[currentLayer] = self.dEdx(t, p)
+        #print('delta5:', delta[currentLayer])
 
         currentLayer -= 1  # layer 4
         dx4dz4 = None
@@ -192,15 +243,19 @@ class EncoderDecoder:
         else:  # dx4dz4 == 0
             return error_message, None, None
 
-        deltas[currentLayer] = np.transpose(self.W[currentLayer + 1]) * deltas[currentLayer + 1] * dx4dz4
+        delta[currentLayer] = np.transpose(self.W[currentLayer + 1]) * delta[currentLayer + 1] * dx4dz4
+        #print('delta4:', delta[currentLayer])
 
         for currentLayer in range(self.TOTAL_LAYERS - 1, 3, -1):
             if currentLayer == 5:
-                WGradients[currentLayer] = deltas[currentLayer] * self.x[currentLayer - 1]  # delta * dxdW
+                WGradients[currentLayer] = delta[currentLayer] * self.x[currentLayer - 1]  # delta * dxdW
             else:
-                WGradients[currentLayer] = np.matmul(deltas[currentLayer], self.x[currentLayer - 1])  # delta * dxdW
+                WGradients[currentLayer] = np.matmul(delta[currentLayer], self.x[currentLayer - 1])  # delta * dxdW
 
-            BGradients[currentLayer] = np.array(deltas[currentLayer] * 1)  # delta5 * dx5dB5
+            BGradients[currentLayer] = delta[currentLayer] * 1  #delta5 * dx5dB5
+
+            #print('WGradient',currentLayer,':',WGradients[currentLayer])
+            #print('BGradient',currentLayer,':',BGradients[currentLayer])
 
         """Encoder Gradients"""
         currentLayer -= 1  # layer 3
@@ -209,97 +264,116 @@ class EncoderDecoder:
         dSigmoid_v = np.vectorize(self.dSigmoid)
 
         # we are making these computations because we need u3's value beforehand
-        hN3 = encoder.HN[currentLayer, sourceNode]
-        h2 = encoder.H[currentLayer - 1, sourceNode]
+        hN3 = encoder.HN[currentLayer, source_node]
+        h2 = encoder.H[currentLayer - 1][source_node]
         u3 = sigmoid_v(np.matmul(self.W[1],
                                  np.transpose(hN3)) + np.matmul(self.U[1], h2))
 
-        hN2 = encoder.HN[currentLayer - 1, sourceNode]
-        h1 = encoder.H[currentLayer - 2, sourceNode]
-        u2 = sigmoid_v(np.matmul(self.W[1],
-                                 np.transpose(hN2)) + np.matmul(self.U[1], h1))
+        hN2 = encoder.HN[currentLayer - 1, source_node]
+        h1 = encoder.H[currentLayer - 2][source_node]
+        u2 = sigmoid_v(np.matmul(self.W[1], np.transpose(hN2)) + np.matmul(self.U[1], h1))
 
         """This if else block corresponds to the max pool 'derivative' """
         if encoder.MaxPoolMaxLayer == 3:
             start = 3
-            deltas[3] = np.matmul(np.transpose(self.W[3 + 1]), deltas[3 + 1])
-            deltas[2] = np.matmul(1 - u3, deltas[2 + 1])
-            deltas[1] = (1 - u2) * deltas[1 + 1]
+            delta[3] = np.matmul(np.transpose(self.W[3 + 1]), delta[3 + 1])
+            delta[2] = np.matmul(1 - u3, delta[2 + 1])
+            delta[1] = (1 - u2) * delta[1 + 1]
         elif encoder.MaxPoolMaxLayer == 2:
             start = 2
-            deltas[2] = np.matmul(np.transpose(self.W[2 + 2]), deltas[2 + 2])
-            deltas[1] = np.matmul(1 - u2, deltas[1 + 1])
+            delta[2] = np.matmul(np.transpose(self.W[2 + 2]), delta[2 + 2])
+            delta[1] = np.matmul(1 - u2, delta[1 + 1])
         else:
-            deltas[1] = np.matmul(np.transpose(self.W[1 + 3]), deltas[1 + 3])
-
+            start = 1
+            delta[1] = np.matmul(np.transpose(self.W[1 + 3]), delta[1 + 3])
+        #print('delta3:', delta[3])
+        #print('delta2:', delta[2])
+        #print('delta1:', delta[1])
         for currentLayer in range(start, 1, -1):
-            hN = encoder.HN[currentLayer, sourceNode]
-            h = encoder.H[currentLayer - 1, sourceNode]
+            hN = encoder.HN[currentLayer, source_node]
+            h = encoder.H[currentLayer - 1][source_node]
 
             f = tanh_v(np.matmul(self.W[3], np.transpose(hN)) + np.matmul(self.U[3], h))
             u = sigmoid_v(np.matmul(self.W[1], np.transpose(hN)) + np.matmul(self.U[1], h))
             r = sigmoid_v(np.matmul(self.W[2], np.transpose(hN)) + np.matmul(self.U[2], h))
 
-            WGradients[1] += np.matmul(deltas[currentLayer],
+            WGradients[1] += np.matmul(delta[currentLayer],
                                        np.array([np.multiply(dSigmoid_v(hN), f) - np.multiply(dSigmoid_v(hN), h)]))
 
-            UGradients[1] += np.matmul(deltas[currentLayer],
+            UGradients[1] += np.matmul(delta[currentLayer],
                                        np.array([np.multiply(dSigmoid_v(h2), f) - np.multiply(dSigmoid_v(h), h)]))
 
-            WGradients[2] += np.matmul(deltas[currentLayer],
+            WGradients[2] += np.matmul(delta[currentLayer],
                                        np.array([np.matmul(u, np.multiply(dSigmoid_v(hN), h))]))
 
-            UGradients[2] += np.matmul(deltas[currentLayer],
+            UGradients[2] += np.matmul(delta[currentLayer],
                                        np.array([np.matmul(u, np.multiply(dSigmoid_v(h), h))]))
 
-            WGradients[3] += np.matmul(deltas[currentLayer],
+            WGradients[3] += np.matmul(delta[currentLayer],
                                        np.array([np.multiply(u, dSigmoid_v(hN))]))
 
-            UGradients[3] += np.matmul(deltas[currentLayer],
+            UGradients[3] += np.matmul(delta[currentLayer],
                                        np.array([np.matmul(u, dSigmoid_v(np.multiply(r, h)))]))
+            """
+            print('WGradients1:', WGradients[1])
+            print('WGradients2:', WGradients[2])
+            print('WGradients3:', WGradients[3])
+
+            print('UGradients1:', UGradients[1])
+            print('UGradients2:', UGradients[2])
+            print('UGradients3:', UGradients[3])
+            """
 
         currentLayer = 1  # layer 1
 
         dh1dw0 = np.zeros(self.EMBEDDING_DIMENSION)
-        if np.count_nonzero(encoder.H[0, sourceNode]) > 0:
-            dh1dw0 = encoder.H[0, sourceNode]
+        if np.count_nonzero(encoder.H[0][source_node]) > 0:
+            dh1dw0 = encoder.H[0][source_node]
         else:
             return error_message, None, None
 
-        WGradients[0] = np.matmul(deltas[1], dh1dw0)
-
+        WGradients[0] = np.matmul(np.transpose(np.array([delta[1]])), np.array([dh1dw0]))
+        #print('WGradients0:', WGradients[0])
         for layer in range(self.TOTAL_LAYERS):
             self.mW[layer], self.vW[layer], finalWUpdate[layer] = self.adamGradient(self.mW[layer],
                                                                                     self.vW[layer],
-                                                                                    WGradients[layer])
+                                                                                    WGradients[layer],
+                                                                                    i)
+            #print('adam W',layer,':',finalWUpdate[layer])
 
             if 1 <= layer <= 3:
                 self.mU[layer], self.vU[layer], finalUUpdate[layer] = self.adamGradient(self.mU[layer],
                                                                                         self.vU[layer],
-                                                                                        UGradients[layer])
+                                                                                        UGradients[layer],
+                                                                                        i)
+                #print('adam U', layer, ':', finalUUpdate[layer])
 
             if layer >= 4:
                 self.mB[layer], self.vB[layer], finalBUpdate[layer] = self.adamGradient(self.mB[layer],
                                                                                         self.vB[layer],
-                                                                                        np.transpose(BGradients[layer]))
-                #print('TEST',layer,':', finalBUpdate[layer])
+                                                                                        np.transpose(BGradients[layer]),
+                                                                                        i)
+                #print('adam B', layer, ':', finalBUpdate[layer])
 
+
+        #return WGradients, UGradients, BGradients
         return finalWUpdate, finalUUpdate, finalBUpdate
 
-    def adamGradient(self, m, v, gradient):
+    def adamGradient(self, m, v, gradient, t):
         m = self.beta1 * m + (1 - self.beta1) * np.array(gradient)
         v = self.beta2 * v + (1 - self.beta2) * np.square(np.array(gradient))
-        m = m / (1 - self.beta1)
-        v = v / (1 - self.beta2)
-        update = m / (np.sqrt(v) + self.eps)
+        m_hat = m / (1 - self.beta1**t)
+        v_hat = v / (1 - self.beta2**t)
+
+        update = np.divide(m_hat, np.sqrt(v_hat) + self.eps)
 
         return m, v, update
 
     def dSigmoid(self, z):
         return math.exp(-z) / ((math.exp(-z) + 1) ** 2)
 
-    def dEdx(self, t, x):
-        return ((-sigmoid(t)) / (x + 0.001)) - ((1 - sigmoid(t)) / (x - 1))
+    def dEdx(self, t, p):
+        return (math.exp(p) - math.exp(t))/(math.exp(p+t) + math.exp(p) + math.exp(t) + 1)
 
     def dxdW(self, x, z, l):
         return self.x[l - 1]
@@ -328,11 +402,10 @@ class EncoderDecoder:
         return targetDifferences
 
     """adapted cross entropy - uses sigmoid to turn t into a probability and ReLU to make sure p is larger than 0"""
-
     def lossFunction(self, targetDifferences, predictedDifferences):
         sumLoss = 0
         for t, p in zip(targetDifferences, predictedDifferences):
-            sumLoss += (-sigmoid(t)) * math.log(ReLU(p) + 0.001) - (1 - sigmoid(t)) * math.log(1 - ReLU(p))
+            sumLoss += (-sigmoid(t)) * math.log(sigmoid(p)) - (1 - sigmoid(t)) * math.log(1 - sigmoid(p))
 
         return sumLoss
 
