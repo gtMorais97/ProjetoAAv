@@ -6,13 +6,12 @@ def uniform_wedge(csr, sample_size):
     acc_wedge_count = []
 
     for v in csr.vertices:
-        if csr.get_degree(v) > 1:
-            total_wedges += csr.get_degree(v) * (csr.get_degree(v) - 1) / 2
+        total_wedges += csr.get_degree(v) * (csr.get_degree(v) - 1) / 2
         acc_wedge_count.append(total_wedges)
 
     sum = 0
     for i in range(sample_size):
-        r = random.randint(0, total_wedges)
+        r = random.randint(0, total_wedges - 1)
         index = search(r, acc_wedge_count)
         w = generate_random_wedge(csr, index)
         sum += c(csr, w)
