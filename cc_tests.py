@@ -74,6 +74,9 @@ plt.ylabel("Triangle count")
 plt.savefig(f"{TSV_FILE}_results.pgf")
 plt.show()
 
+plt.cla()
+plt.clf()
+
 plt.plot(x, uw_time_results, '-o', color="tab:blue")
 plt.plot(x, ue_time_results, '-o', color="tab:green")
 plt.plot(x, uv_time_results, '-o', color="tab:red")
