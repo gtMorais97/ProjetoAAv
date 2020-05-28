@@ -14,9 +14,9 @@ matplotlib.rcParams.update({
     'pgf.rcfonts': False,
 })
 
-TSV_FILE = "out.roadNet-PA"
-TRIANGLE_COUNT = 67150
-SAMPLE_SIZE = 300
+TSV_FILE = "out.as-skitter"
+TRIANGLE_COUNT = 28769868
+SAMPLE_SIZE = 2000
 ITERATIONS = 15
 WRITE_TO_FILE = True
 
