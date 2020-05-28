@@ -1,37 +1,73 @@
 import os
 import csr
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 from clustering_coefficient import uniform_wedge, uniform_edge, uniform_vertex
 
 cwd = os.getcwd()
-graph = csr.CSR(tsv_file=f"{cwd}\\tsv_graphs\\out.com-amazon")
+G = csr.CSR(tsv_file=f"{cwd}\\tsv_graphs\\out.com-amazon")
 
-iterations = 10
+sample_sizes = [300, 500, 1000]
+iterations_per_sample_size = 10
 triangle_count = 667129
-sample_size = 500
 
-x = np.array([*range(1, iterations + 1)])
-wedge = np.array([])
-edge = np.array([])
-vertex = np.array([])
+x = np.arange(iterations_per_sample_size)
+uw_results = np.array((len(sample_sizes), iterations_per_sample_size))
+ue_results = np.array((len(sample_sizes), iterations_per_sample_size))
+uv_results = np.array((len(sample_sizes), iterations_per_sample_size))
 
-for i in range(iterations):
-    print(f"Iteration\t{i}")
-    wedge = np.append(wedge, uniform_wedge(graph, sample_size))
-    edge = np.append(edge, uniform_edge(graph, sample_size))
-    vertex = np.append(vertex, uniform_vertex(graph, sample_size))
+uw_time_results = np.array((len(sample_sizes), iterations_per_sample_size))
+ue_time_results = np.array((len(sample_sizes), iterations_per_sample_size))
+uv_time_results = np.array((len(sample_sizes), iterations_per_sample_size))
 
-plt.plot(x, wedge, '-o', color='tab:blue')
-plt.plot(x, edge, '-o', color='tab:red')
-plt.plot(x, vertex, '-o', color='tab:green')
-plt.axhline(y=np.mean(wedge), color='tab:blue', linestyle='--')
-plt.axhline(y=np.mean(edge), color='tab:red', linestyle='--')
-plt.axhline(y=np.mean(vertex), color='tab:green', linestyle='--')
-plt.axhline(y=triangle_count, color='k', linestyle='--')
-plt.legend(["Uniform wedge", "Uniform edge", "Uniform vertex",
-            "Uniform wedge mean", "Uniform edge mean", "Uniform vertex mean", "Real"])
-plt.title(f"Approximate triangle counts with a sample size of {sample_size}")
-plt.ylabel("Triangle count")
-plt.xlabel("Iteration")
+fig, ax = plt.subplots(nrows=len(sample_sizes), ncols=2)
+
+for s, sample_size in enumerate(sample_sizes):
+    print(f"Sample size:\t{sample_size}")
+    for i in range(iterations_per_sample_size):
+        start = time.process_time()
+        uw = uniform_wedge(G, sample_size)
+        uw_time = time.process_time() - start
+        print(f"Uniform wedge time:\t{uw_time}")
+        uw_results[s, i] = uw
+        uw_time_results[s, i] = uw_time
+
+        start = time.process_time()
+        ue = uniform_edge(G, sample_size)
+        ue_time = time.process_time() - start
+        print(f"Uniform edge time:\t{ue_time}")
+        ue_results[s, i] = ue
+        ue_time_results[s, i] = ue_time
+
+        start = time.process_time()
+        uv = uniform_vertex(G, sample_size)
+        uv_time = time.process_time() - start
+        print(f"Uniform vertex time:\t{uv_time}")
+        uv_results[s, i] = uv
+        uv_time_results[s, i] = uv_time
+
+    ax[s, 0].plot(x, uw_results[s], '-o', color='tab:blue')
+    ax[s, 0].plot(x, ue_results[s], '-o', color='tab:green')
+    ax[s, 0].plot(x, uv_results[s], '-o', color='tab:red')
+    ax[s, 0].axhline(y=np.mean(uw_results[s]), color='tab:blue', linestyle='--')
+    ax[s, 0].axhline(y=np.mean(ue_results[s]), color='tab:green', linestyle='--')
+    ax[s, 0].axhline(y=np.mean(uv_results[s]), color='tab:red', linestyle='--')
+    ax[s, 0].axhline(y=triangle_count, color='k', linestyle='--')
+
+    ax[s, 1].plot(x, uw_time_results[s], '-o', color='tab:blue')
+    ax[s, 1].plot(x, ue_time_results[s], '-o', color='tab:green')
+    ax[s, 1].plot(x, uv_time_results[s], '-o', color='tab:red')
+    ax[s, 1].axhline(y=np.mean(uw_time_results[s]), color='tab:blue', linestyle='--')
+    ax[s, 1].axhline(y=np.mean(ue_time_results[s]), color='tab:green', linestyle='--')
+    ax[s, 1].axhline(y=np.mean(uv_time_results[s]), color='tab:red', linestyle='--')
+
 plt.show()
+
+# for s, sample_size in enumerate(sample_sizes):
+#     print(f"Sample size:\t{sample_size}")
+#     for i in range(iterations_per_sample_size):
+
+#         pass
+# print(G.n_vertices)
+# print(G.n_edges)
