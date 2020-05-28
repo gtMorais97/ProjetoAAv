@@ -2,13 +2,22 @@ import os
 import csr
 import time
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 from clustering_coefficient import uniform_wedge, uniform_edge, uniform_vertex
 
+matplotlib.use("pgf")
+matplotlib.rcParams.update({
+    "pgf.texsystem": "pdflatex",
+    'font.family': 'serif',
+    'text.usetex': True,
+    'pgf.rcfonts': False,
+})
+
 TSV_FILE = "out.com-amazon"
 TRIANGLE_COUNT = 667129
-SAMPLE_SIZE = 10000
-ITERATIONS = 1
+SAMPLE_SIZE = 300
+ITERATIONS = 15
 WRITE_TO_FILE = True
 
 G = csr.CSR(tsv_file=f"{os.getcwd()}\\tsv_graphs\\{TSV_FILE}")
@@ -62,6 +71,7 @@ plt.legend(["Uniform Wedge", "Uniform Edge", "Uniform Vertex",
 plt.title(f"Results over {ITERATIONS} iterations with a sample size of {SAMPLE_SIZE}")
 plt.xlabel("Iteration")
 plt.ylabel("Triangle count")
+plt.savefig(f"{TSV_FILE}_results.pgf")
 plt.show()
 
 plt.plot(x, uw_time_results, '-o', color="tab:blue")
@@ -75,6 +85,7 @@ plt.legend(["Uniform Wedge", "Uniform Edge", "Uniform Vertex",
 plt.title(f"Execution time over {ITERATIONS} iterations with a sample size of {SAMPLE_SIZE}")
 plt.xlabel("Iteration")
 plt.ylabel("Time (seconds)")
+plt.savefig(f"{TSV_FILE}_times.pgf")
 plt.show()
 
 if WRITE_TO_FILE:
