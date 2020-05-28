@@ -52,22 +52,17 @@ for s, sample_size in enumerate(sample_sizes):
     ax[s, 0].plot(x, uw_results[s], '-o', color='tab:blue')
     ax[s, 0].plot(x, ue_results[s], '-o', color='tab:green')
     ax[s, 0].plot(x, uv_results[s], '-o', color='tab:red')
-    ax[s, 0].axhline(y=np.mean(uw_results[s]),
-                     color='tab:blue', linestyle='--')
-    ax[s, 0].axhline(y=np.mean(ue_results[s]),
-                     color='tab:green', linestyle='--')
+    ax[s, 0].axhline(y=np.mean(uw_results[s]), color='tab:blue', linestyle='--')
+    ax[s, 0].axhline(y=np.mean(ue_results[s]), color='tab:green', linestyle='--')
     ax[s, 0].axhline(y=np.mean(uv_results[s]), color='tab:red', linestyle='--')
     ax[s, 0].axhline(y=triangle_count, color='k', linestyle='--')
 
     ax[s, 1].plot(x, uw_time_results[s], '-o', color='tab:blue')
     ax[s, 1].plot(x, ue_time_results[s], '-o', color='tab:green')
     ax[s, 1].plot(x, uv_time_results[s], '-o', color='tab:red')
-    ax[s, 1].axhline(y=np.mean(uw_time_results[s]),
-                     color='tab:blue', linestyle='--')
-    ax[s, 1].axhline(y=np.mean(ue_time_results[s]),
-                     color='tab:green', linestyle='--')
-    ax[s, 1].axhline(y=np.mean(uv_time_results[s]),
-                     color='tab:red', linestyle='--')
+    ax[s, 1].axhline(y=np.mean(uw_time_results[s]), color='tab:blue', linestyle='--')
+    ax[s, 1].axhline(y=np.mean(ue_time_results[s]), color='tab:green', linestyle='--')
+    ax[s, 1].axhline(y=np.mean(uv_time_results[s]), color='tab:red', linestyle='--')
 
 handles, labels = ax[0, 0].get_legend_handles_labels()
 labels = ["Uniform Wedge", "Uniform Edge", "Uniform Vertex",
@@ -76,19 +71,16 @@ fig.legend(handles, labels, loc='upper center')
 
 if write_to_txt:
     with open(f"{graph}_results.txt", "w", encoding="utf-8") as txt:
-        txt.write(f"Real triangle count:\t{triangle_count}")
-        txt.write(f"Iterations:\t{iterations_per_sample_size}")
+        txt.write(f"Real triangle count:\t{triangle_count}\n")
+        txt.write(f"Iterations:\t{iterations_per_sample_size}\n")
         for s, sample_size in enumerate(sample_sizes):
-            txt.write(f"Sample size:\t{sample_size}")
-            txt.write(f"\tUniform Wedge Mean:\t{np.mean(uw_results[s])}")
-            txt.write(
-                f"\tUniform Wedge Time Mean:\t{np.mean(uw__time_results[s])}s")
-            txt.write(f"\tUniform Edge Mean:\t{np.mean(ue_results[s])}")
-            txt.write(
-                f"\tUniform Edge Time Mean:\t{np.mean(ue__time_results[s])}s")
-            txt.write(f"\tUniform Vertex Mean:\t{np.mean(uv_results[s])}")
-            txt.write(
-                f"\tUniform Vertex Time Mean:\t{np.mean(uv__time_results[s])}s")
+            txt.write(f"Sample size:\t{sample_size}\n")
+            txt.write(f"\tUniform Wedge Mean:\t{np.mean(uw_results[s])}\n")
+            txt.write(f"\tUniform Wedge Time Mean:\t{np.mean(uw_time_results[s])}s\n")
+            txt.write(f"\tUniform Edge Mean:\t{np.mean(ue_results[s])}\n")
+            txt.write(f"\tUniform Edge Time Mean:\t{np.mean(ue_time_results[s])}s\n")
+            txt.write(f"\tUniform Vertex Mean:\t{np.mean(uv_results[s])}\n")
+            txt.write(f"\tUniform Vertex Time Mean:\t{np.mean(uv_time_results[s])}s\n")
 
 plt.show()
 
