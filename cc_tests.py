@@ -6,8 +6,10 @@ import matplotlib.pyplot as plt
 from clustering_coefficient import uniform_wedge, uniform_edge, uniform_vertex
 
 cwd = os.getcwd()
-G = csr.CSR(tsv_file=f"{cwd}\\tsv_graphs\\out.com-amazon")
+graph = "out.com-amazon"
+G = csr.CSR(tsv_file=f"{cwd}\\tsv_graphs\\{graph}")
 
+write_to_txt = True
 sample_sizes = [300, 500, 1000]
 iterations_per_sample_size = 10
 triangle_count = 667129
@@ -50,17 +52,43 @@ for s, sample_size in enumerate(sample_sizes):
     ax[s, 0].plot(x, uw_results[s], '-o', color='tab:blue')
     ax[s, 0].plot(x, ue_results[s], '-o', color='tab:green')
     ax[s, 0].plot(x, uv_results[s], '-o', color='tab:red')
-    ax[s, 0].axhline(y=np.mean(uw_results[s]), color='tab:blue', linestyle='--')
-    ax[s, 0].axhline(y=np.mean(ue_results[s]), color='tab:green', linestyle='--')
+    ax[s, 0].axhline(y=np.mean(uw_results[s]),
+                     color='tab:blue', linestyle='--')
+    ax[s, 0].axhline(y=np.mean(ue_results[s]),
+                     color='tab:green', linestyle='--')
     ax[s, 0].axhline(y=np.mean(uv_results[s]), color='tab:red', linestyle='--')
     ax[s, 0].axhline(y=triangle_count, color='k', linestyle='--')
 
     ax[s, 1].plot(x, uw_time_results[s], '-o', color='tab:blue')
     ax[s, 1].plot(x, ue_time_results[s], '-o', color='tab:green')
     ax[s, 1].plot(x, uv_time_results[s], '-o', color='tab:red')
-    ax[s, 1].axhline(y=np.mean(uw_time_results[s]), color='tab:blue', linestyle='--')
-    ax[s, 1].axhline(y=np.mean(ue_time_results[s]), color='tab:green', linestyle='--')
-    ax[s, 1].axhline(y=np.mean(uv_time_results[s]), color='tab:red', linestyle='--')
+    ax[s, 1].axhline(y=np.mean(uw_time_results[s]),
+                     color='tab:blue', linestyle='--')
+    ax[s, 1].axhline(y=np.mean(ue_time_results[s]),
+                     color='tab:green', linestyle='--')
+    ax[s, 1].axhline(y=np.mean(uv_time_results[s]),
+                     color='tab:red', linestyle='--')
+
+handles, labels = ax[0, 0].get_legend_handles_labels()
+labels = ["Uniform Wedge", "Uniform Edge", "Uniform Vertex",
+          "Uniform Wedge Mean", "Uniform Edge Mean", "Uniform Vertex Mean", "Real value"]
+fig.legend(handles, labels, loc='upper center')
+
+if write_to_txt:
+    with open(f"{graph}_results.txt", "w", encoding="utf-8") as txt:
+        txt.write(f"Real triangle count:\t{triangle_count}")
+        txt.write(f"Iterations:\t{iterations_per_sample_size}")
+        for s, sample_size in enumerate(sample_sizes):
+            txt.write(f"Sample size:\t{sample_size}")
+            txt.write(f"\tUniform Wedge Mean:\t{np.mean(uw_results[s])}")
+            txt.write(
+                f"\tUniform Wedge Time Mean:\t{np.mean(uw__time_results[s])}s")
+            txt.write(f"\tUniform Edge Mean:\t{np.mean(ue_results[s])}")
+            txt.write(
+                f"\tUniform Edge Time Mean:\t{np.mean(ue__time_results[s])}s")
+            txt.write(f"\tUniform Vertex Mean:\t{np.mean(uv_results[s])}")
+            txt.write(
+                f"\tUniform Vertex Time Mean:\t{np.mean(uv__time_results[s])}s")
 
 plt.show()
 
