@@ -1,19 +1,19 @@
 from DrBC import Encoder
 import csr
-import random_graph as rg
-import betweenness_centrality as bc
+import utils
 import numpy as np
 import os
 import math
 import time
 import random
 from random import randrange
-from collections import Counter
 import operator
+import matplotlib.pyplot as plt
 
 
 class EncoderDecoder:
-    def __init__(self):
+    def __init__(self, n_iterations=10):
+        self.N_ITERATIONS = n_iterations
         self.INPUT_DIMENSION = 3
         self.EMBEDDING_DIMENSION = 3
         self.L = 3  # number of encoder layers -1 (0...L)
@@ -116,13 +116,14 @@ class EncoderDecoder:
         self.mB[5] = np.zeros(self.OUTPUT_DIMENSION)
         self.vB[5] = np.zeros(self.OUTPUT_DIMENSION)
 
-        for i in range(1,1000):
+        loss_vector = np.zeros(self.N_ITERATIONS)
+        for i in range(1,self.N_ITERATIONS+1):
             print('epoch:', i)
             """Generate Random Graph"""
             
             n_nodes = randrange(self.MIN_VERTICES, self.MAX_VERTICES)
             connection_prob = random.uniform(self.MIN_CONNECTION_PROB, self.MAX_CONNECTION_PROB)
-            G = rg.erdos_renyi_graph(n_nodes, connection_prob)
+            G = utils.erdos_renyi_graph(n_nodes, connection_prob)
             """
             cur_path = os.path.dirname(__file__)
 
@@ -136,7 +137,7 @@ class EncoderDecoder:
 
             """Get exact BC values"""
             bcScoresTarget = np.zeros(n_nodes)
-            bcScoresDict = bc.betweenness_centrality(G)
+            bcScoresDict = utils.betweenness_centrality(G)
             for key in bcScoresDict:
                 bcScoresTarget[key] = bcScoresDict[key]
 
@@ -164,6 +165,7 @@ class EncoderDecoder:
             #print('target:', targetDifferences)
             #print('pred:', predictedDifferences)
             loss = self.lossFunction(targetDifferences, predictedDifferences)
+            loss_vector[i-1] = loss
             print("Loss:", loss)
 
             WGradientsSum = [None] * self.TOTAL_LAYERS
@@ -195,6 +197,11 @@ class EncoderDecoder:
                     self.U[j] = self.U[j] - (self.learning_rate * UGradientsSum[j])
                 if j >= 4:
                     self.B[j] = self.B[j] - (self.learning_rate * BGradientsSum[j][0])
+
+        plt.title('DrBC Loss')
+        plt.ylim(2,4)
+        plt.plot(range(self.N_ITERATIONS), loss_vector)
+        plt.show()
 
     def feedForward(self, encoder, G, node):
         X = np.array([[G.get_degree(node)], [1], [1]])
@@ -358,6 +365,28 @@ class EncoderDecoder:
 
         #return WGradients, UGradients, BGradients
         return finalWUpdate, finalUUpdate, finalBUpdate
+
+    def predict(self, tsv_file=None, txt_file=None, G=None):
+        if tsv_file:
+            G = csr.CSR(tsv_file=tsv_file)
+        elif txt_file:
+            G = csr.CSR(txt_file=txt_file)
+
+
+
+        encoder = Encoder.Encoder(self.L, G.n_vertices, self.EMBEDDING_DIMENSION)
+        predictedBCs = {}
+        percentage = 0
+        for node in range(G.n_vertices):
+            self.feedForward(encoder, G, node)
+            predictedBCs[node] = self.x[5]
+
+            if node % (int(G.n_vertices/10)) == 0:
+                print(percentage,'%')
+                percentage += 10
+
+        topPredicted = list(sorted(predictedBCs.items(), key=operator.itemgetter(1), reverse=True)[:self.TOP_N])
+        return topPredicted
 
     def adamGradient(self, m, v, gradient, t):
         m = self.beta1 * m + (1 - self.beta1) * np.array(gradient)

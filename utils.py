@@ -1,5 +1,5 @@
 import random
-from csr import CSR
+import csr
 import networkx as nx
 
 
@@ -14,10 +14,11 @@ def erdos_renyi_graph(n=5, p=0.2):
                 edges[j].append(i)
                 n_edges += 1
 
-    return CSR(n_vertices=n, n_edges=n_edges, edges=edges)
+    return csr.CSR(n_vertices=n, n_edges=n_edges, edges=edges)
 
 
 def tsv_to_array(tsv_file):
+    print(tsv_file)
     with open(tsv_file, "r", encoding='utf-8') as tsv:
         tsv.readline()
         info = tsv.readline().split(" ")
