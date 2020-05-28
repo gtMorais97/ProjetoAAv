@@ -14,8 +14,8 @@ matplotlib.rcParams.update({
     'pgf.rcfonts': False,
 })
 
-TSV_FILE = "out.com-amazon"
-TRIANGLE_COUNT = 667129
+TSV_FILE = "out.roadNet-PA"
+TRIANGLE_COUNT = 67150
 SAMPLE_SIZE = 300
 ITERATIONS = 15
 WRITE_TO_FILE = True

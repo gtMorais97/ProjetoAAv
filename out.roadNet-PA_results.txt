@@ -1,0 +1,12 @@
+Triangle count: 67150
+Iterations: 15
+Sample size: 300
+Uniform Wedge Mean: 67311.01896296296
+Uniform Wedge MAPE: 0.16654848570089079
+Uniform Wedge Time Mean: 38.626041666666666
+Uniform Edge Mean: 67141.34387407407
+Uniform Edge MAPE: 1.4665377593557816
+Uniform Edge Time Mean: 0.046875
+Uniform Vertex Mean: 86346.95114962965
+Uniform Vertex MAPE: 1.6192149587931937
+Uniform Vertex Time Mean: 0.004166666666666667
