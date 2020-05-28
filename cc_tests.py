@@ -13,13 +13,13 @@ iterations_per_sample_size = 10
 triangle_count = 667129
 
 x = np.arange(iterations_per_sample_size)
-uw_results = np.array((len(sample_sizes), iterations_per_sample_size))
-ue_results = np.array((len(sample_sizes), iterations_per_sample_size))
-uv_results = np.array((len(sample_sizes), iterations_per_sample_size))
+uw_results = np.zeros((len(sample_sizes), iterations_per_sample_size))
+ue_results = np.zeros((len(sample_sizes), iterations_per_sample_size))
+uv_results = np.zeros((len(sample_sizes), iterations_per_sample_size))
 
-uw_time_results = np.array((len(sample_sizes), iterations_per_sample_size))
-ue_time_results = np.array((len(sample_sizes), iterations_per_sample_size))
-uv_time_results = np.array((len(sample_sizes), iterations_per_sample_size))
+uw_time_results = np.zeros((len(sample_sizes), iterations_per_sample_size))
+ue_time_results = np.zeros((len(sample_sizes), iterations_per_sample_size))
+uv_time_results = np.zeros((len(sample_sizes), iterations_per_sample_size))
 
 fig, ax = plt.subplots(nrows=len(sample_sizes), ncols=2)
 
