@@ -1,5 +1,4 @@
 from DrBC import EncoderDecoder as ed
-import random_graph as rg
 import csr
 import numpy as np
 import time
@@ -12,7 +11,7 @@ def test_random_graphs():
     encoder_decoder = ed.EncoderDecoder()
 
     for i,n_nodes in enumerate(number_of_nodes):
-        G = rg.erdos_renyi_graph(n_nodes, 0.3)
+        G = csr.erdos_renyi_graph(n_nodes, 0.3)
         start_time = time.time()
         encoder_decoder.predict(G=G)
         running_time[i] = (time.time() - start_time)[:5]
