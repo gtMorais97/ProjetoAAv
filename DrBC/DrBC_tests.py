@@ -60,10 +60,14 @@ def test_brandes_vs_drbc_connection_prob():
             utils.betweenness_centrality(G)
             running_time_brandes[i] = float((str(time.time() - start_time)[:5]))
 
-        f.write('connection probabilities:', connection_prob)
-        f.write('number of nodes:', number_of_nodes)
-        f.write('DrBc Running time:', running_time_drbc)
-        f.write('Brandes running time:', running_time_brandes)
+        s0 = 'connection probabilities: ' + str(connection_prob)
+        s1 = 'number of nodes: ' + str(number_of_nodes)
+        s2 = 'DrBc Running time: ' + str(running_time_drbc)
+        s3 = 'Brandes running time: ' + str(running_time_brandes)
+        f.write(s0)
+        f.write(s1)
+        f.write(s2)
+        f.write(s3)
 
         plt.title('Running Time for DrBC and Brandes - Erdos Renyi graphs')
         plt.plot(connection_prob, running_time_drbc, '-o', color="tab:green")
@@ -123,7 +127,7 @@ def memory_test():
         encoder_decoder.predict(G=G)
         memory[i] = process.memory_info().rss
 
-    plt.title('Memory Used by DrBC - Real Graphs')
+    plt.title('Memory Used by DrBC - Erdos Renyi Graphs')
     plt.plot(number_of_nodes, memory)
     plt.show()
 
