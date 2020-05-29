@@ -1,3 +1,12 @@
+"""
+This module contains a implementation of the triangle count approximation algorithms
+for large graphs as presented in Siddharth Bhatia's paper "Approximate Triangle Count
+and Clustering Coefficient" which can be found in the following link:
+
+https://dl.acm.org/doi/10.1145/3183713.3183715
+
+These algorithms were implemented having a CSR representation of the graphs in mind.
+"""
 import random
 
 
@@ -64,31 +73,48 @@ def uniform_vertex(csr, sample_size):
     return ((csr.n_vertices - s_estimate) * sum) / (3 * sample_size)
 
 
-def binary_search(r, acc_wedge_count):
-    left = 0
-    right = len(acc_wedge_count) - 1
-    while left <= right:
-        mid = int(left + ((right - left) / 2))
-        if acc_wedge_count[mid] == r:
-            return mid
-        elif r < acc_wedge_count[mid]:
-            right = mid - 1
-        else:
-            left = mid + 1
-    return None
-
-
 def search(r, acc_wedge_count):
+    """
+    This is a simple linear search method.
+    If it is used in the context of the uniform wedge algorithm then it traverses
+    the accumulative wedge count array and returns the index of the vertex that is
+    the center of a given wedge.
+    If it it used in the context of the uniform edge algorithm then it traverses
+    the offset vertex of the CSR graph representation and retuns the index of the
+    vertex that is connected to a given edge.
+    Time complexity:    O(n)
+    Space complexity:   O(n)
+    """
     for i in range(len(acc_wedge_count)):
         if r <= acc_wedge_count[i]:
             return i
 
 
 def generate_random_wedge(csr, index):
+    """
+    This method generates a random wedge from the graph 'csr' with vertex 'index'
+    as its center. It starts by collecting all the neighbors of vertex 'index' and
+    in an array and then randomizes its order. By taking the first two elements of
+    the randomized neighbors array, it generates a random wedge with vertex 'index'
+    as its center.
+    It returns an array of size three with vertex 'index' as its middle element
+    and the two random neighbors as the end points of the array.
+    Time complexity:    O(dv), where dv is the degree of vertex 'index'
+    Time complexity:    O(dv), where dv is the degree of vertex 'index'
+    """
     neighbors = csr.get_neighbors(index)
     random.shuffle(neighbors)
     return [neighbors.pop(), index, neighbors.pop()]
 
 
 def c(csr, w):
+    """
+    This methos verifies if a given wedge is closed or not.
+    It does that by verifying if the vertices located at the ending points
+    of the wedge are each other neighbors, by checking if the vertex w[0] is
+    contained in the list of neighbors of the vertex w[2]
+    It returns 1 if they are neighbors and 0 otherwise.
+    Time complexity:    O(dv), where dv is the degree of the vertex w[2]
+    Time complexity:    O(dv), where dv is the degree of the vertex w[2]
+    """
     return 1 if w[0] in csr.get_neighbors(w[2]) else 0
