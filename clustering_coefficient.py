@@ -7,10 +7,15 @@ https://dl.acm.org/doi/10.1145/3183713.3183715
 
 These algorithms were implemented having a CSR representation of the graphs in mind.
 """
+
 import random
 
 
 def uniform_wedge(csr, sample_size):
+    """
+    This is a implementation of the Uniform Wedge algorithm as presented in the
+    aforementioned paper.
+    """
     total_wedges = 0
     acc_wedge_count = []
 
@@ -29,6 +34,10 @@ def uniform_wedge(csr, sample_size):
 
 
 def uniform_edge(csr, sample_size):
+    """
+    This is a implementation of the Uniform Edge algorithm as presented in the
+    aforementioned paper.
+    """
     s1_estimate = 0
 
     for i in range(sample_size):
@@ -52,6 +61,10 @@ def uniform_edge(csr, sample_size):
 
 
 def uniform_vertex(csr, sample_size):
+    """
+    This is a implementation of the Uniform Vertex algorithm as presented in the
+    aforementioned paper.
+    """
     s_estimate = 0
 
     for i in range(sample_size):
