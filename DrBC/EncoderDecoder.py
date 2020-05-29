@@ -123,7 +123,7 @@ class EncoderDecoder:
             
             n_nodes = randrange(self.MIN_VERTICES, self.MAX_VERTICES)
             connection_prob = random.uniform(self.MIN_CONNECTION_PROB, self.MAX_CONNECTION_PROB)
-            G = utils.erdos_renyi_graph(n_nodes, connection_prob)
+            G = csr.erdos_renyi_graph(n_nodes, connection_prob)
             """
             cur_path = os.path.dirname(__file__)
 
