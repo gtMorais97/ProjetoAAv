@@ -372,8 +372,6 @@ class EncoderDecoder:
         elif txt_file:
             G = csr.CSR(txt_file=txt_file)
 
-
-
         encoder = Encoder.Encoder(self.L, G.n_vertices, self.EMBEDDING_DIMENSION)
         predictedBCs = {}
         percentage = 0
