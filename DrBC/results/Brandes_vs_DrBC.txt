@@ -1,0 +1,1 @@
+connection probabilities: 0.2number of nodes: [  10  100  500 1000 1500 2000]DrBc Running time: [3.4000e-02 6.1430e+00 3.3850e+02 2.5910e+03 9.7540e+03 1.9656e+04]Brandes running time: [0.000e+00 1.180e-01 7.109e+00 6.599e+01 1.910e+02 4.656e+02]
